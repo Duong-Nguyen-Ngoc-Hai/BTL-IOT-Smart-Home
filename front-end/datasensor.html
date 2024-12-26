@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/styles/datasensor.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"> -->
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> -->
+</head>
+<body>
+    <header>
+        <h1>Smart Home</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="dashboard2.html">Dashboard 2</a></li>
+                <li><a href="datasensor.html">Data Sensor</a></li>
+                <li><a href="actionhistory.html">Action History</a></li>
+                <li><a href="profile.html">Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="datasensor-container">
+            <!-- Form nhập giá trị -->
+            <div class="form-container">
+                <input type="text" id="temperature" placeholder="Temperature">
+                <input type="text" id="humidity" placeholder="Humidity">
+                <input type="text" id="lux" placeholder="Light">
+                <input type="text" id="outtemp" placeholder="Outside Temperature">
+                <input type="text" id="timestamp" placeholder="Time">
+                <button class="on-off-button" id="searchButton">Search</button>
+                <button class="on-off-button" id="clearButton">Clear</button>
+            </div>
+
+            <!-- Bảng danh sách -->
+            <div class="table-container">
+                <div class="table-controls">
+                    <label for="sortBy">Sort By:</label>
+                    <select id="sortBy">
+                        <option value="timestamp_desc">Mới nhất</option>
+                        <option value="timestamp_asc">Cũ nhất</option>
+                        <option value="temperature_asc">Nhiệt độ tăng dần</option>
+                        <option value="temperature_desc">Nhiệt độ giảm dần</option>
+                        <option value="humidity_asc">Độ ẩm tăng dần</option>
+                        <option value="humidity_desc">Độ ẩm giảm dần</option>
+                        <option value="lux_asc">Ánh sáng tăng dần</option>
+                        <option value="lux_desc">Ánh sáng giảm dần</option>
+                        <option value="outtemp_asc">Nhiệt độ ngoài trời tăng dần</option>
+                        <option value="outtemp_desc">Nhiệt độ ngoài trời giảm dần</option>
+
+                    </select>
+                    <label for="rowsPerPage">Rows per page:</label>
+                    <select id="rowsPerPage">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Temperature</th>
+                            <th>Humidity</th>
+                            <th>Light</th>
+                            <th>Outside Temperature</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataBody" class="databody">
+                        <!-- Nội dung cập nhật bằng JavaScript -->
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <button class="on-off-button" id="prevPage">Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button class="on-off-button" id="nextPage">Next</button>
+                </div>
+                <button class="on-off-button-delete" id="deleteButton">Delete All Data</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="script.js"></script>
+    <script src="datascript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

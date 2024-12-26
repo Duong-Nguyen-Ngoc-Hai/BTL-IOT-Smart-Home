@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard 2</title>
+    <link rel="stylesheet" href="styles/dashboard2.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Smart Home</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="dashboard2.html">Dashboard 2</a></li>
+                <li><a href="datasensor.html">Data Sensor</a></li>
+                <li><a href="actionhistory.html">Action History</a></li>
+                <li><a href="profile.html">Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div class="dashboard-container">
+            <div class="parameter-box temperature">
+                <!-- <i class="fas fa-thermometer-half"></i> -->
+                <div><img src="https://img.icons8.com/ios/50/000000/thermometer.png"/></div>
+                <span class="label"> Outside Temperature: </span>
+                <span class="value" id="outsideTemperature"></span>
+            </div>
+        </div>
+        <div class="chart-and-controls">
+            <div class="chart-container">
+                <canvas id="outsideTempChart"></canvas>
+            </div>
+            <div class="device-control-container">
+                <div class="device-control led">
+                    <div class = "icon-container">
+                        <i class="fa-solid fa-lightbulb off-icon"></i>
+                    </div>
+                    <!-- <img src="https://img.icons8.com/ios/50/000000/light.png"/> -->
+                    <span class="label">Đèn sân</span>
+                    <button class="on-off-button on" id="yardLightButton">On</button>
+                </div>
+                <div class="device-control led">
+                    <div class = "icon-container">
+                        <i class="fa-solid fa-lightbulb off-icon"></i>
+                    </div>
+                    <!-- <img src="https://img.icons8.com/ios/50/000000/light.png"/> -->
+                    <span class="label">Đèn cổng</span>
+                    <button class="on-off-button on" id="gateLightButton">On</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="script2.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
+</body>
+</html>
