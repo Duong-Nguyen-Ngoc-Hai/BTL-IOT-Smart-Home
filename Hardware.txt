@@ -1,0 +1,334 @@
+#include <Wire.h>
+#include <BH1750.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <DHT.h>
+#include <HTTPClient.h>
+
+#define DHTPIN 4
+#define DHTTYPE DHT11
+
+#define LED1 25
+#define LED2 26
+#define LED3 27
+#define LED4 13
+#define LED5 14
+
+const char* ssid = "bclo";
+const char* password = "12345678";
+const char* mqtt_server = "192.168.251.65";
+const char* serverName = "http://192.168.251.65:8080/api/sensor_data";
+const char* deviceAPI = "http://192.168.251.65:8080/api/device";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+DHT dht(DHTPIN, DHTTYPE);
+BH1750 lightMeter;
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Đang kết nối tới ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi đã kết nối");
+}
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+  lightMeter.begin();
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+  dht.begin();
+
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+  pinMode(LED4, OUTPUT);
+  pinMode(LED5, OUTPUT);
+}
+
+bool led1State = LOW;
+bool led2State = LOW;
+bool led3State = LOW;
+bool led4State = LOW;
+bool led5State = LOW;
+
+
+void callback(char* topic, byte* message, unsigned int length) {
+  Serial.print("Nhận lệnh từ topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+  String messageTemp;
+
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)message[i]);
+    messageTemp += (char)message[i];
+  }
+  Serial.println();
+
+  bool updateStatus1 = false;
+  bool updateStatus2 = false;
+  bool updateStatus3 = false;
+  bool updateStatus4 = false;
+  bool updateStatus5 = false;
+
+
+  if (String(topic) == "esp32/led") {
+    if (messageTemp == "ON1") {
+      updateStatus1 = true;
+      led1State = HIGH;
+      digitalWrite(LED1, HIGH);
+      logAction("Air Conditioner", "Turn ON");
+      
+    } else if (messageTemp == "OFF1") {
+      updateStatus1 = true;
+      led1State = LOW;
+      digitalWrite(LED1, LOW);
+      logAction("Air Conditioner", "Turn OFF");
+    } else if (messageTemp == "ON2") {
+      updateStatus2 = true;
+      led2State = HIGH;
+      digitalWrite(LED2, HIGH);
+      logAction("Fan", "Turn ON");
+    } else if (messageTemp == "OFF2") {
+      updateStatus2 = true;
+      led2State = LOW;
+      digitalWrite(LED2, LOW);
+      logAction("Fan", "Turn OFF");
+    } else if (messageTemp == "ON3") {
+      updateStatus3 = true;
+      led3State = HIGH;
+      digitalWrite(LED3, HIGH);
+      logAction("Led", "Turn ON");
+    } else if (messageTemp == "OFF3") {
+      updateStatus3 = true;
+      led3State = LOW;
+      digitalWrite(LED3, LOW);
+      logAction("Led", "Turn OFF");
+    } else if (messageTemp == "OFFALL") {
+      led1State = LOW;
+      led2State = LOW;
+      led3State = LOW;
+      led4State = LOW;
+      led5State = LOW;
+      digitalWrite(LED1, LOW);
+      digitalWrite(LED2, LOW);
+      digitalWrite(LED3, LOW);
+      digitalWrite(LED4, LOW);
+      digitalWrite(LED5, LOW);
+      logAction("All Device", "Turn OFF");
+    } else if (messageTemp == "ONALL") {
+      led1State = HIGH;
+      led2State = HIGH;
+      led3State = HIGH;
+      led4State = HIGH;
+      led5State = HIGH;
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, HIGH);
+      digitalWrite(LED4, HIGH);
+      digitalWrite(LED5, HIGH);
+      logAction("All Device", "Turn ON");
+    } else if (messageTemp == "ON4") {
+      led4State = HIGH;
+      updateStatus4 = true;
+      logAction("Yard Light", "Turn ON");
+      digitalWrite(LED4, HIGH);
+    } else if (messageTemp == "OFF4") {
+      led4State = LOW;
+      updateStatus4 = true;
+      logAction("Yard Light", "Turn OFF");
+      digitalWrite(LED4, LOW);
+    } else if (messageTemp == "ON5") {
+      led5State = HIGH;
+      updateStatus5 = true;
+      logAction("Gate Light", "Turn ON");
+      digitalWrite(LED5, HIGH);
+    } else if (messageTemp == "OFF5") {
+      led5State = LOW;
+      updateStatus5 = true;
+      logAction("Gate Light", "Turn OFF");
+      digitalWrite(LED5, LOW);
+    }
+
+    String led1Status = (led1State == HIGH) ? "ON" : "OFF";
+    String led2Status = (led2State == HIGH) ? "ON" : "OFF";
+    String led3Status = (led3State == HIGH) ? "ON" : "OFF";
+    // updateDevice(led1Status, led2Status, led3Status);
+    if(updateStatus1 == true) {
+      String statusMessage = "{\"airConditioner\":\"" + String(led1State ? "ON" : "OFF") +"\"}";
+      client.publish("esp32/led/status", statusMessage.c_str());
+    } else if(updateStatus2 == true) {
+      String statusMessage = "{\"fan\":\"" + String(led2State ? "ON" : "OFF") +"\"}";
+      client.publish("esp32/led/status", statusMessage.c_str());
+    } else if(updateStatus3 == true) {
+      String statusMessage = "{\"led\":\"" + String(led3State ? "ON" : "OFF") +"\"}";
+      client.publish("esp32/led/status", statusMessage.c_str());
+    } else if(updateStatus4 == true) {
+      String statusMessage = "{\"yardLight\":\"" + String(led4State ? "ON" : "OFF") +"\"}";
+      client.publish("esp32/led/status", statusMessage.c_str());
+    } else if(updateStatus5 == true) {
+      String statusMessage = "{\"gateLight\":\"" + String(led5State ? "ON" : "OFF") +"\"}";
+      client.publish("esp32/led/status", statusMessage.c_str());
+    }
+    // String statusMessage = "{\"airConditioner\":\"" + String(led1State ? "ON" : "OFF") +
+    //                        "\",\"fan\":\"" + String(led2State ? "ON" : "OFF") +
+    //                        "\",\"led\":\"" + String(led3State ? "ON" : "OFF") + "\"}";
+    // client.publish("esp32/led/status", statusMessage.c_str());
+  }
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Đang kết nối MQTT...");
+    if (client.connect("ESP32Client", "duong", "12345")) {
+      Serial.println("Kết nối thành công!");
+      client.subscribe("esp32/led");
+    } else {
+      Serial.print("Thất bại, rc=");
+      Serial.print(client.state());
+      Serial.println(" Thử lại sau 5 giây");
+      delay(5000);
+    }
+  }
+}
+
+void flashLed() {
+  if(led4State == HIGH) {
+    for(int i=0;i<3;i++) {
+      digitalWrite(LED4, LOW);
+      delay(500);
+      digitalWrite(LED4, HIGH);
+      delay(500);
+    }
+  } else {
+    for(int i=0;i<3;i++) {
+      digitalWrite(LED4, HIGH);
+      delay(500);
+      digitalWrite(LED4, LOW);
+      delay(500);
+    }
+  }
+}
+
+void sendData(float temperature, float humidity, float lux) {
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        http.begin(serverName);
+        http.addHeader("Content-Type", "application/json");
+
+        float outtemp = random(100, 550) / 10.0;
+
+        String jsonData = "{\"temperature\":" + String(temperature) +
+                          ",\"humidity\":" + String(humidity) +
+                          ",\"lux\":" + String(lux) + 
+                          ",\"outtemp\":" + String(outtemp) + "}";
+
+        int httpResponseCode = http.POST(jsonData);
+
+        if (httpResponseCode > 0) {
+            String response = http.getString();
+            Serial.println("Response: " + response);
+        } else {
+            Serial.print("Error code: ");
+            Serial.println(httpResponseCode);
+        }
+        http.end();
+
+        if(outtemp > 50){
+          flashLed();
+        }
+    } else {
+        Serial.println("WiFi Disconnected");
+    }
+}
+
+void logAction(const String& device, const String& action) {
+  if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        String serverLogName = "http://192.168.251.65:8080/api/historyaction";
+        http.begin(serverLogName);
+        http.addHeader("Content-Type", "application/json");
+        String jsonData = "{\"device\":\"" + device + "\",\"action\":\"" + action + "\"}";
+        int httpResponseCode = http.POST(jsonData);
+        if (httpResponseCode > 0) {
+            String response = http.getString();
+            Serial.println("Log Response: " + response);
+        } else {
+            Serial.print("Log Error code: ");
+            Serial.println(httpResponseCode);
+        }
+        http.end();
+    } else {
+        Serial.println("WiFi Disconnected");
+    }
+}
+
+// void updateDevice(const String& led1, const String& led2, const String& led3) {
+//     if (WiFi.status() == WL_CONNECTED) {
+//         HTTPClient http;
+//         http.begin(deviceAPI);
+//         http.addHeader("Content-Type", "application/json");
+
+//         String jsonData = "{\"led1\":\"" + led1 +
+//                           "\",\"led2\":\"" + led2 +
+//                           "\",\"led3\":\"" + led3 + "\"}";
+
+//         int httpResponseCode = http.POST(jsonData);
+
+//         if (httpResponseCode > 0) {
+//             String response = http.getString();
+//             Serial.println("Device Update Response: " + response);
+//         } else {
+//             Serial.print("Error code: ");
+//             Serial.println(httpResponseCode);
+//         }
+//         http.end();
+//     } else {
+//         Serial.println("WiFi Disconnected");
+//     }
+// }
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  float lux = lightMeter.readLightLevel();
+
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Không đọc được dữ liệu từ cảm biến DHT11!");
+    return;
+  }
+  if (!isnan(humidity) && !isnan(temperature)) {
+    sendData(temperature, humidity, lux);
+  }
+
+  Serial.print("Độ ẩm: ");
+  Serial.print(humidity);
+  Serial.print(" %\tNhiệt độ: ");
+  Serial.print(temperature);
+  Serial.print(" *C\tCường độ ánh sáng: ");
+  Serial.print(lux);
+  Serial.println(" lux");
+  String payload = String("{\"temperature\":") + temperature +
+                   ",\"humidity\":" + humidity +
+                   ",\"lux\":" + lux + "}";
+  client.publish("esp32/data", payload.c_str());
+
+  delay(10000); // Đọc dữ liệu mỗi 10 giây
+}
